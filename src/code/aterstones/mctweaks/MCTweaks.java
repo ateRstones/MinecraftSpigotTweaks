@@ -56,30 +56,7 @@ public class MCTweaks extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onItemBreak(PlayerItemBreakEvent event) {
-        // TODO Item MetaData seems to screw up findings
-        tryItemReplace(event.getPlayer(), event.getBrokenItem());
-    }
-
-    @EventHandler
-    public void onInventoryOpen(Player event) {
-        System.out.println("Open Inv");
-    }
-
-    @EventHandler
-    public void onInventoryClose(InventoryCloseEvent event) {
-        System.out.println("Close Inv");
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onItemDrop(PlayerDropItemEvent event) {
-        if(!event.isCancelled()) {
-            // TODO Hotbar drop seems to only be packet detectable
-            System.out.println("Player drop");
-            System.out.println(event.getPlayer().getOpenInventory());
-            if(event.getPlayer().getOpenInventory() == null) {
-                tryItemReplace(event.getPlayer(), event.getItemDrop().getItemStack());
-            }
-        }
+        tryItemReplace(event.getPlayer(), event.getBrokenItem(), true);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -97,6 +74,10 @@ public class MCTweaks extends JavaPlugin implements Listener {
     }
 
     public void tryItemReplace(Player player, ItemStack is) {
+        tryItemReplace(player, is, false);
+    }
+
+    public void tryItemReplace(Player player, ItemStack is, boolean simpleCheck) {
         System.out.println(is);
         if(is != null) {
             if(player.getGameMode() == GameMode.SURVIVAL && is.getAmount() - 1 == 0) {
@@ -110,7 +91,7 @@ public class MCTweaks extends JavaPlugin implements Listener {
                     return;
                 }
                 
-                int replenishSlot = findItemOfSameType(inv, is, slot);
+                int replenishSlot = findItemOfSameType(inv, is, slot, simpleCheck);
                 System.out.println("Slot return is " + replenishSlot);
                 if(replenishSlot != -1) {
                     replaceItemInFuture(inv, slot, replenishSlot);
@@ -128,10 +109,10 @@ public class MCTweaks extends JavaPlugin implements Listener {
         }, 1);
     }
 
-    public int findItemOfSameType(Inventory inventory, ItemStack stack, int ignoreSlot) {
+    public int findItemOfSameType(Inventory inventory, ItemStack stack, int ignoreSlot, boolean simpleCheck) {
         int slot = 0;
         for(ItemStack is : inventory.getContents()) {
-            if(is != null && slot != ignoreSlot && stack.isSimilar(is)) {
+            if(is != null && slot != ignoreSlot && (!simpleCheck ? stack.isSimilar(is) : (stack.getType() == is.getType()))) {
                 return slot;
             }
             slot++;
